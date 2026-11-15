@@ -37,7 +37,11 @@ void line_follower(int argc, char *argv[])
   int ch = 0;
   int irL,irR;	// status of infrared sensors
   int lfL,lfR;	// status of line sensors
-
+  // Line follower settings
+  int forwardSpeed = 30;
+  int turnSpeed = 100;
+  int lastTurn = 0;
+  
   // initio_DriveForward (... ); // todo: Initially, try to drive straight forward
 
   while (ch != 'q') {
@@ -54,24 +58,37 @@ void line_follower(int argc, char *argv[])
       initio_DriveForward (0); // Stop
     }
     // no obstacle ahead, so focus on line following
-    else if (BLACK(lfL) && BLACK(lfL)) { 
+    else if (BLACK(lfL) && BLACK(lfR)) { 
       mvprintw(3, 1,"Action 2: Straight (Line sensors: %d, %d)    ", lfL, lfR);
-      initio_DriveForward(30);
+      initio_DriveForward(forwardSpeed);
       // todo: move straight forward
     }
-    else if (BLACK(lfL)) {
+    else if (BLACK(lfR)) {
       // car is too much on the right
       mvprintw(3, 1,"Action 3: Spin left (Line sensors: %d, %d)    ", lfL, lfR);
-      initio_SpinLeft(100);// todo: turn left
+      initio_SpinLeft(turnSpeed);// todo: turn left
+      lastTurn = 1; // Remember left turn
     }
     else if (BLACK(lfL)) {
       // car is too much on the left
       mvprintw(3, 1,"Action 3: Spin right (Line sensors: %d, %d)    ", lfL, lfR);
-      initio_SpinRight(100); // todo: turn right
+      initio_SpinRight(turnSpeed); // todo: turn right
+      lastTurn = 2; // Remember right turn
     }
     else {
+      // Both sensors have lost the black line
       mvprintw(3, 1,"Lost my line (Line sensors: %d, %d)        ", lfL, lfR);
-      initio_DriveForward(0);// todo: Stop
+      
+      // Try to find the line using the last turning direction
+      if (lastTurn == 1) {
+      	  initio_SpinLeft(turnSpeed);
+      }
+      else if (lastTurn == 2) {
+      	  initio_SpinRight(turnSpeed);
+      }
+      else {
+          initio_DriveForward(0); // Stop if no previous turn
+      }
     }
 
     ch = getch();
